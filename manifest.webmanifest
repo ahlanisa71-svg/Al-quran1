@@ -1,0 +1,18 @@
+{
+  "name": "Al-Quran 30 Juz",
+  "short_name": "Al-Quran",
+  "description": "Al-Quran 30 juz lengkap dengan terjemahan, transliterasi, tajwid, audio, dan Tawasul.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#18233a",
+  "theme_color": "#18233a",
+  "lang": "id",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

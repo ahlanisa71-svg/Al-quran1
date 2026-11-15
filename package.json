@@ -1,0 +1,11 @@
+{
+  "name": "al-quran-30-juz",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Al-Quran 30 Juz",
+  "dependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/cli": "^7.0.0",
+    "@capacitor/core": "^7.0.0"
+  }
+}
