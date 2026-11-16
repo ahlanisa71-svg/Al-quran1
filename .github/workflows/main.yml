@@ -1,0 +1,82 @@
+name: Build APK
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: alquran_tawasul
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ekstrak proyek dari alquran_tawasul.zip
+        working-directory: .
+        run: |
+          test -f alquran_tawasul.zip || { echo "File alquran_tawasul.zip tidak ada di repo. Upload dulu ke halaman utama repo."; exit 1; }
+          unzip -q -o alquran_tawasul.zip
+          ls alquran_tawasul
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: false
+
+      - name: Download full Quran data (114 surah, 30 juz)
+        run: python3 tools/fetch_quran.py
+
+      - name: Bundle fonts into the APK (offline)
+        run: |
+          mkdir -p google_fonts
+          B=https://raw.githubusercontent.com/google/fonts/main/ofl
+          dl() { curl -fsSL "$B/$1" -o "google_fonts/$2" && echo "ok  $2" || { echo "SKIP $2"; rm -f "google_fonts/$2"; }; }
+          dl amiriquran/AmiriQuran-Regular.ttf AmiriQuran-Regular.ttf
+          dl scheherazadenew/ScheherazadeNew-Regular.ttf ScheherazadeNew-Regular.ttf
+          dl amiri/Amiri-Regular.ttf Amiri-Regular.ttf
+          dl "notonaskharabic/NotoNaskhArabic%5Bwght%5D.ttf" NotoNaskhArabic-Regular.ttf
+          dl lateef/Lateef-Regular.ttf Lateef-Regular.ttf
+          dl harmattan/Harmattan-Regular.ttf Harmattan-Regular.ttf
+          dl "notonastaliqurdu/NotoNastaliqUrdu%5Bwght%5D.ttf" NotoNastaliqUrdu-Regular.ttf
+          dl "cairo/Cairo%5Bslnt%2Cwght%5D.ttf" Cairo-Regular.ttf
+          dl tajawal/Tajawal-Regular.ttf Tajawal-Regular.ttf
+          dl "reemkufi/ReemKufi%5Bwght%5D.ttf" ReemKufi-Regular.ttf
+          dl "markazitext/MarkaziText%5Bwght%5D.ttf" MarkaziText-Regular.ttf
+          dl "elmessiri/ElMessiri%5Bwght%5D.ttf" ElMessiri-Regular.ttf
+          dl arefruqaa/ArefRuqaa-Regular.ttf ArefRuqaa-Regular.ttf
+          dl mirza/Mirza-Regular.ttf Mirza-Regular.ttf
+          for w in Regular Medium SemiBold Bold; do dl poppins/Poppins-$w.ttf Poppins-$w.ttf; done
+          ls -la google_fonts
+          test -s google_fonts/AmiriQuran-Regular.ttf || { echo "Font utama Amiri Quran gagal diunduh"; exit 1; }
+
+      - name: Generate Android platform files
+        run: |
+          cp -r lib /tmp/lib_bak && cp pubspec.yaml /tmp/pubspec_bak.yaml
+          flutter create --platforms=android --org com.rifqi --project-name alquran_tawasul .
+          rm -rf lib && cp -r /tmp/lib_bak lib && cp /tmp/pubspec_bak.yaml pubspec.yaml
+          rm -rf test
+
+      - name: Configure Android (name, internet permission)
+        run: python3 tools/patch_android.py
+
+      - name: Get packages
+        run: flutter pub get
+
+      - name: Generate launcher icon
+        run: dart run flutter_launcher_icons
+
+      - name: Build release APK
+        run: flutter build apk --release --split-per-abi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: alquran-tawasul-apk
+          path: alquran_tawasul/build/app/outputs/flutter-apk/*.apk
